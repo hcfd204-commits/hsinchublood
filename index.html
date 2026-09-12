@@ -400,6 +400,7 @@
                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                         <button onclick="loadDefaultHighMatchCases(true)" class="btn-purple">🔄 載入預設 44 筆高度符合案件</button>
                         <button onclick="loadCandidatesToApproved(true)" class="btn-primary">➕ 匯入 5,771 筆潛在指標案件</button>
+                        <button onclick="syncToGoogleSheet()" class="btn-success" style="background:#0284c7;">☁️ 同步至 Google 試算表</button>
                         <button onclick="exportToCSV()" class="btn-success">📊 匯出 CSV/Excel 報表</button>
                         <button onclick="exportToJSON()" class="btn-secondary">💾 匯出 JSON 備份</button>
                         <button onclick="clearApprovedList()" class="btn-danger">🗑️ 一鍵清空清冊</button>
@@ -1054,7 +1055,42 @@
             }
         }
 
+        
+        function syncToGoogleSheet() {
+            var savedUrl = localStorage.getItem('gas_sync_url') || '';
+            var gasUrl = prompt('請輸入您的 Google Apps Script Web 應用程式網址 (部署存取權須設為「任何人」):', savedUrl);
+            if (!gasUrl) return;
+
+            gasUrl = gasUrl.trim();
+            localStorage.setItem('gas_sync_url', gasUrl);
+
+            const allCases = [...window.state.trauma, ...window.state.ohca];
+            const approvedRecords = allCases.filter(c => window.state.approvedList.includes(c.id));
+
+            if (approvedRecords.length === 0) {
+                alert('目前清冊中無案件，請先加入案件！');
+                return;
+            }
+
+            const payload = {
+                action: 'sync',
+                approvedList: approvedRecords
+            };
+
+            fetch(gasUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(function() {
+                alert('✅ 已發送同步請求！' + approvedRecords.length.toLocaleString() + ' 筆案件已寫入 Google 試算表。\n(請開啟您的 Google Sheet 查看更新結果)');
+            }).catch(function(err) {
+                alert('❌ 同步失敗: ' + err);
+            });
+        }
+
         function exportToCSV() {
+
             const allCases = [...window.state.trauma, ...window.state.ohca];
             const approvedRecords = allCases.filter(c => window.state.approvedList.includes(c.id));
 
