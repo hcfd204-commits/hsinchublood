@@ -1056,13 +1056,15 @@
         }
 
         
-        function syncToGoogleSheet() {
-            var savedUrl = localStorage.getItem('gas_sync_url') || '';
-            var gasUrl = prompt('請輸入您的 Google Apps Script Web 應用程式網址 (部署存取權須設為「任何人」):', savedUrl);
-            if (!gasUrl) return;
+        function syncToGoogleSheet(forcePrompt) {
+            var defaultUrl = "https://script.google.com/macros/s/AKfycbyYTHXP_6uEXUCKWTUpGLHy8pdXdhXMye9BfjDvM9tom2VBNiqd9IanX394BGMGvgJmpQ/exec";
+            var gasUrl = defaultUrl;
 
-            gasUrl = gasUrl.trim();
-            localStorage.setItem('gas_sync_url', gasUrl);
+            if (forcePrompt) {
+                var custom = prompt('Google Apps Script 雲端同步網址 (預設已內建):', defaultUrl);
+                if (!custom) return;
+                gasUrl = custom.trim();
+            }
 
             const allCases = [...window.state.trauma, ...window.state.ohca];
             const approvedRecords = allCases.filter(c => window.state.approvedList.includes(c.id));
@@ -1083,7 +1085,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             }).then(function() {
-                alert('✅ 已發送同步請求！' + approvedRecords.length.toLocaleString() + ' 筆案件已寫入 Google 試算表。\n(請開啟您的 Google Sheet 查看更新結果)');
+                alert('✅ 已成功發送雲端同步！\n共 ' + approvedRecords.length.toLocaleString() + ' 筆輸血案件已即時寫入 Google 試算表！\n\n(您可以開啟 Google Sheet 查看最新數據與更新時間)');
             }).catch(function(err) {
                 alert('❌ 同步失敗: ' + err);
             });
