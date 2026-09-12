@@ -400,7 +400,8 @@
                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                         <button onclick="loadDefaultHighMatchCases(true)" class="btn-purple">🔄 載入預設 44 筆高度符合案件</button>
                         <button onclick="loadCandidatesToApproved(true)" class="btn-primary">➕ 匯入 5,771 筆潛在指標案件</button>
-                        <button onclick="syncToGoogleSheet()" class="btn-success" style="background:#0284c7;">☁️ 同步至 Google 試算表</button>
+                        <button onclick="syncToGoogleSheet()" class="btn-success" style="background:#0284c7;">☁️ 寫入至 Google 試算表</button>
+                        <button onclick="loadFromGoogleSheet()" class="btn-success" style="background:#0d9488;">📥 從試算表載入最新清冊</button>
                         <button onclick="exportToCSV()" class="btn-success">📊 匯出 CSV/Excel 報表</button>
                         <button onclick="exportToJSON()" class="btn-secondary">💾 匯出 JSON 備份</button>
                         <button onclick="clearApprovedList()" class="btn-danger">🗑️ 一鍵清空清冊</button>
@@ -1056,6 +1057,29 @@
         }
 
         
+        
+        function loadFromGoogleSheet() {
+            var defaultUrl = "https://script.google.com/macros/s/AKfycbyYTHXP_6uEXUCKWTUpGLHy8pdXdhXMye9BfjDvM9tom2VBNiqd9IanX394BGMGvgJmpQ/exec";
+
+            fetch(defaultUrl)
+                .then(function(resp) { return resp.json(); })
+                .then(function(res) {
+                    if (res && res.status === 'success' && Array.isArray(res.approvedIds)) {
+                        window.state.approvedList = res.approvedIds;
+                        saveApprovedToLocalStorage();
+                        renderDashboardStats();
+                        applyFilters();
+                        renderApprovedList();
+                        alert('✅ 已成功從 Google 試算表同步載入！\n共載入 ' + res.approvedIds.length.toLocaleString() + ' 筆團隊最新審核清冊案件！');
+                    } else {
+                        alert('⚠️ 雲端試算表目前尚無案件數據，或 Apps Script 需重新部署。');
+                    }
+                })
+                .catch(function(err) {
+                    alert('❌ 同步載入失敗: ' + err + '\n(請確認 Google Apps Script 已重新部署極權存取設為「任何人」)');
+                });
+        }
+
         function syncToGoogleSheet(forcePrompt) {
             var defaultUrl = "https://script.google.com/macros/s/AKfycbyYTHXP_6uEXUCKWTUpGLHy8pdXdhXMye9BfjDvM9tom2VBNiqd9IanX394BGMGvgJmpQ/exec";
             var gasUrl = defaultUrl;
